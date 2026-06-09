@@ -1,0 +1,49 @@
+% Appendix (optional)
+\section{附录：补充材料（占位）}
+\label{sec:appendix}
+
+\subsection{符号表}
+\begin{table}[h]
+  \centering
+  \caption{符号说明}
+  \label{tab:symbols}
+  \begin{tabular}{ll}
+    \toprule
+    符号 & 含义 \\
+    \midrule
+    \(B\) & batch 大小 \\
+    \(L\) & 历史输入长度（回望窗口） \\
+    \(H\) & 预测步数（预测长度） \\
+    \(C\) & 变量数（通道数） \\
+    \(P\) & 目标参数维度（回归任务） \\
+    \(d_{\text{model}}\) & token 隐空间维度 \\
+    \(d_z\) & 频谱 latent 维度 \\
+    \(D_s\) & 压缩前频谱特征维度 \\
+    \(K\) & 每窗口频带数 \\
+    \(\mathcal{W}\) & 多时间窗口集合 \(\{L, L/2, L/4\}\) \\
+    \(N\) & Transformer Encoder 层数 \\
+    \(\gamma_{\text{base}}\) & 全局可学习调制基强度 \\
+    \(\delta\) & 逐层调制衰减因子 \\
+    \(\gamma_{\ell}\) & 第 \(\ell\) 层的实际调制强度 \\
+    \(\alpha_{\ell}, \beta_{\ell}\) & 第 \(\ell\) 层的 FiLM 缩放/平移参数 \\
+    \(M_w\) & 窗口 \(w\) 的功率谱 \\
+    \(E_k^{(w)}\) & 窗口 \(w\) 的第 \(k\) 频带能量 \\
+    \(R^{(w)}\) & 窗口 \(w\) 的高低频能量比 \\
+    \(H^{(w)}\) & 窗口 \(w\) 的归一化频谱熵 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{模块计算复杂度分析（可选）}
+多分辨率频谱提取的计算复杂度为 \(O(3 \cdot C \cdot L \log L)\)（三次 rFFT，每次在长度为 \(L, L/2, L/4\) 的序列上进行），频谱压缩器与 FiLM Generator 均为轻量 MLP，其计算量显著小于 Transformer Encoder 的自注意力计算 \(O(C^2 \cdot d_{\text{model}})\)。在典型配置下（\(L=96, C=7, d_{\text{model}}=512\)），频谱分支的 FLOPs 仅为 Encoder 部分的约 \(2\%\sim3\%\)。
+
+\subsection{更多结果（可选）}
+可在此补充不同数据集、不同 horizon、不同变量维的更完整表格；或补充运行时间/参数量对比等。
+
+\subsection{可退化性验证实验设计（可选）}
+建议设计如下验证实验以量化可退化性：
+\begin{itemize}
+  \item 在纯白噪声（无频谱结构）数据集上，记录 \(\gamma_{\text{base}}\) 在训练过程中的变化曲线——预期其收敛到接近 0 的值；
+  \item 在强周期性数据集上，观测 \(\gamma_{\text{base}}\) 是否显著大于初始化值，以及各层 \(\gamma_{\ell}\) 的分布；
+  \item 对比"零初始化 vs 随机初始化 FiLM 末层"的训练曲线差异，验证恒等初始化对训练早期稳定性的影响。
+\end{itemize}

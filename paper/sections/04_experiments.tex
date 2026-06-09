@@ -1,0 +1,137 @@
+% 04 Experiments (placeholders; fill in with actual results)
+\section{实验}
+\label{sec:experiments}
+
+本节给出实验设置与结果。你可以在补充数据与训练细节后，直接替换占位内容并保留排版结构。
+
+\subsection{数据集}
+本工作覆盖两类数据：
+\begin{itemize}
+  \item \textbf{多变量时间序列预测数据}：填写数据集名称、变量数、采样频率、训练/验证/测试划分方式、缺失值处理与标准化策略等；
+  \item \textbf{CEMP 恒星参数回归数据}：填写观测序列类型（如光谱/测光/其它序列表示）、序列长度与分辨率、目标参数集合（\(P\) 维，如 \(T_{\mathrm{eff}}\)、\(\log g\)、\([\mathrm{Fe/H}]\)、\([\mathrm{C/Fe}]\) 等）、数据清洗与标注来源、以及训练/验证/测试划分原则（如按天区/观测批次/信噪比分层等）。
+\end{itemize}
+
+\begin{table}[t]
+  \centering
+  \caption{数据集统计信息（占位）}
+  \label{tab:dataset_stats}
+  \begin{tabular}{lcccc}
+    \toprule
+    数据集/任务 & 频率/分辨率 & 变量数 \(C\) / 参数维 \(P\) & 训练/验证/测试 & 时间跨度/观测范围 \\
+    \midrule
+    Forecast-Dataset-A & -- & \(C=\) -- & --/--/-- & -- \\
+    Forecast-Dataset-B & -- & \(C=\) -- & --/--/-- & -- \\
+    CEMP-Regression & -- & \(P=\) -- & --/--/-- & -- \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{对比方法与骨干设置}
+列出基线方法（统计模型、深度模型、Transformer 类等），并说明是否采用相同输入长度、预测长度、特征工程与训练预算。建议给出统一的复现实验设置或引用公开代码设置。
+
+本文渐进式频率条件 FiLM 框架以 iTransformer~\cite{itransformer} 为骨干，默认配置如下（可通过 configs 覆盖）：
+\begin{itemize}
+  \item \(d_{\text{model}} = 512\)，\(N = 3\) 层 Encoder，\(n_{\text{heads}} = 8\)，\(d_{\text{ff}} = 2048\)；
+  \item 频谱参数：\(K = 4\) 频带，3 窗口 \(\mathcal{W} = \{L, L/2, L/4\}\)，latent 维度 \(d_z = 32\)，FiLM 隐层 \(h_f = 32\)；
+  \item 调制超参：\(\gamma_{\text{init}} = 0.02\)，\(\delta = 0.7\)，\(s_{\max} = 5.0\)；
+  \item 稳定化：\(\log(1+x)\) 压缩、clamp 截断、\(\tanh\) 有界调制、FiLM 末层零初始化——均为默认开启。
+\end{itemize}
+
+\subsection{实现细节}
+填写优化器（如 AdamW）、学习率、batch size、训练轮数、早停策略、硬件环境与随机种子等。
+
+\subsection{评价指标}
+针对两类任务分别报告指标：
+\begin{itemize}
+  \item \textbf{预测任务}：MAE、MSE/RMSE，并说明是否对变量维与预测步做平均（或报告分 horizon 指标）。
+  \item \textbf{参数回归任务}：对每个参数维分别报告 MAE/RMSE（必要时给出加权平均），并可补充 \(R^2\)、Spearman/Pearson 相关系数、以及在不同信噪比区间的分组结果。
+\end{itemize}
+
+\subsection{主结果}
+\begin{table}[t]
+  \centering
+  \caption{与对比方法的多步预测结果（占位；越小越好）}
+  \label{tab:main_results}
+  \begin{tabular}{lcccccccc}
+    \toprule
+    \multirow{2}{*}{方法} & \multicolumn{2}{c}{\(H=96\)} & \multicolumn{2}{c}{\(H=192\)} & \multicolumn{2}{c}{\(H=336\)} & \multicolumn{2}{c}{\(H=720\)} \\
+    \cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}\cmidrule(lr){8-9}
+    & MSE & MAE & MSE & MAE & MSE & MAE & MSE & MAE \\
+    \midrule
+    iTransformer (backbone) & -- & -- & -- & -- & -- & -- & -- & -- \\
+    Informer~\cite{informer} & -- & -- & -- & -- & -- & -- & -- & -- \\
+    Autoformer~\cite{autoformer} & -- & -- & -- & -- & -- & -- & -- & -- \\
+    FEDformer~\cite{fedformer} & -- & -- & -- & -- & -- & -- & -- & -- \\
+    Progressive Freq.-cond. FiLM (Ours) & \textbf{--} & \textbf{--} & \textbf{--} & \textbf{--} & \textbf{--} & \textbf{--} & \textbf{--} & \textbf{--} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+在文字分析中建议强调：不同预测长度下的趋势、在不同数据集上的一致性、以及与频率结构/非平稳程度相关的表现差异；特别关注相比 iTransformer 骨干的提升幅度，验证频域调制在纯骨干之上的增益。
+
+\begin{table}[t]
+  \centering
+  \caption{CEMP 恒星参数回归结果（占位；越小越好）}
+  \label{tab:cemp_results}
+  \begin{tabular}{lcccc}
+    \toprule
+    方法 & \(T_{\mathrm{eff}}\) MAE & \(\log g\) MAE & \([\mathrm{Fe/H}]\) MAE & \([\mathrm{C/Fe}]\) MAE \\
+    \midrule
+    StarNet~\cite{starnet} & -- & -- & -- & -- \\
+    iTransformer (backbone) & -- & -- & -- & -- \\
+    Progressive Freq.-cond. FiLM (Ours) & \textbf{--} & \textbf{--} & \textbf{--} & \textbf{--} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{消融实验}
+以下消融项逐模块验证渐进式频率条件 FiLM 各核心设计的贡献（按从完整模型逐步移除的顺序）：
+
+\begin{itemize}
+  \item \textbf{Full Model}：渐进式频率条件 FiLM 完整模型；
+  \item \textbf{$-$ Progressive FiLM}：将逐层独立 FiLM Generator 替换为单一共享 FiLM Generator（仅在第 0 层前调制一次），移除逐层衰减机制，验证"逐层渐进式注入"的价值；
+  \item \textbf{$-$ Learned Gamma}：将可学习 \(\gamma_{\text{base}}\) 替换为固定值 0.1（Sigmoid 参数化变为硬编码常数），验证"数据集自适应调制强度"的贡献；
+  \item \textbf{$-$ Multi-Resolution}：将三窗口频谱替换为单窗口（仅全序列 \(L\)），验证多分辨率设计的尺度鲁棒性增益；
+  \item \textbf{$-$ Spectral Entropy}：从频谱特征中移除归一化频谱熵，仅保留频带能量与高低频比，验证频谱熵作为可预测性信号的价值；
+  \item \textbf{$-$ Stabilization}：同时移除 \(\log(1+x)\) 压缩、clamp 截断与 \(\tanh\) 有界约束（调制直接使用原始 \(\alpha, \beta\)），验证稳定化管道对训练鲁棒性的影响；
+  \item \textbf{$-$ All Spectrum (= iTransformer)}：完全移除频谱分支与 FiLM 调制，退化为纯 iTransformer + RevIN 基线。
+\end{itemize}
+
+\begin{table}[t]
+  \centering
+  \caption{消融实验结果（占位）}
+  \label{tab:ablation}
+  \begin{tabular}{lcc}
+    \toprule
+    变体 & MSE & MAE \\
+    \midrule
+    Progressive Freq.-cond. FiLM (Full) & \textbf{--} & \textbf{--} \\
+    $-$ Progressive FiLM (single FiLM) & -- & -- \\
+    $-$ Learned Gamma (fixed \(\gamma = 0.1\)) & -- & -- \\
+    $-$ Multi-Resolution (single window) & -- & -- \\
+    $-$ Spectral Entropy (energy + ratio only) & -- & -- \\
+    $-$ Stabilization (no log1p/clamp/tanh) & -- & -- \\
+    $-$ All Spectrum (= iTransformer) & -- & -- \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{参数敏感性分析（可选）}
+建议分析以下关键超参的敏感性：
+\begin{itemize}
+  \item 衰减因子 \(\delta \in \{0.5, 0.7, 0.85, 1.0\}\)——\(\delta = 1.0\) 等价于所有层等强度调制，可验证衰减机制的必要性；
+  \item latent 维度 \(d_z \in \{16, 32, 48, 64\}\)——验证频谱压缩的维度鲁棒性；
+  \item 频带数 \(K \in \{3, 4, 6, 8\}\)——验证频带划分粒度的影响；
+  \item \(\gamma_{\text{init}}\) 初始值（保守 vs 激进）——验证可退化性初始化策略的有效性。
+\end{itemize}
+
+\subsection{可视化分析（可选）}
+可包含：(1) 预测曲线与真实曲线的对比；(2) 不同样本的频谱熵与预测误差的关系散点图（验证频谱熵作为可预测性信号的合理性）；(3) 各层 \(\gamma_{\ell}\) 的实际学习值与手选值的对比；(4) 频带能量分布在不同类别序列上的可视化差异。
+
+\begin{figure}[t]
+  \centering
+  % \includegraphics[width=0.9\linewidth]{figures/placeholder.pdf}
+  \fbox{\parbox{0.9\linewidth}{\centering\vspace{3cm}图：预测可视化示例（待补充）}}
+  \caption{预测可视化示例（占位）}
+  \label{fig:vis}
+\end{figure}
