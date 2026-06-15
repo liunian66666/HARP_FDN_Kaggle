@@ -4,6 +4,7 @@ import torch
 from exp.exp_main_patch0608 import Exp_Main
 import random
 import numpy as np
+torch.set_default_dtype(torch.float32)
 
 fix_seed = 2021
 
