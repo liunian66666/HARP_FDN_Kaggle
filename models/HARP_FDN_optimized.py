@@ -109,7 +109,8 @@ class PatchMixerStream(nn.Module):
             x = self.padding_patch_layer(x)
 
         patch = x.unfold(dimension=-1, size=self.patch_len, step=self.stride)
-        patch = self.patch_embed(patch) + self.patch_pos
+        #patch = self.patch_embed(patch) + self.patch_pos
+        patch = self.patch_embed(patch) + self.patch_pos.to(patch.dtype)
 
         for block in self.blocks:
             if self.training and self.use_checkpoint:
