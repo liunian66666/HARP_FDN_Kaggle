@@ -2,7 +2,7 @@
 if [ -z "${BASH_VERSION:-}" ]; then exec bash "$0" "$@"; fi
 set -euo pipefail
 
-ROOT="kaggle/working"
+ROOT="/kaggle/working"
 cd "${ROOT}"
 
 : "${DATA_NAME:?DATA_NAME is required}"
