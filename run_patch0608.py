@@ -6,8 +6,7 @@ import random
 import numpy as np
 # 全局默认浮点类型
 torch.set_default_dtype(torch.float32)
-# 强制 CUDA 张量默认 float32
-torch.set_default_tensor_type(torch.cuda.FloatTensor)
+
 
 fix_seed = 2021
 
@@ -193,6 +192,7 @@ if args.is_training:
             args.des, ii)
 
         exp = Exp(args)  # set experiments
+        exp.model.float()
         print('>>>>>>>start training : {}>>>>>>>>>>>>>>>>>>>>>>>>>>'.format(setting))
         exp.train(setting)
 
