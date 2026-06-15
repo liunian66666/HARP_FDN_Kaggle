@@ -2,7 +2,7 @@
 if [ -z "${BASH_VERSION:-}" ]; then exec bash "$0" "$@"; fi
 set -euo pipefail
 
-ROOT="/home/DM24/workspace/Time_Series_Forecasting/HARP_FDN"
+ROOT="kaggle/working"
 cd "${ROOT}"
 
 : "${DATA_NAME:?DATA_NAME is required}"
