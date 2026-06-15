@@ -579,12 +579,13 @@ class ModelEMA:
 
 class Exp_Main(Exp_Basic):
     def __init__(self, args):
+        # 提前初始化多卡标记，解决属性不存在报错
+        self.use_multi_gpu = args.use_multi_gpu and args.use_gpu
+        # 再调用父类 __init__（父类会执行 _build_model）
         super(Exp_Main, self).__init__(args)
         self.con_loss_coe_cls_1 = args.con_cls_1
         self.con_loss_coe_cls_2 = args.con_cls_2
         self.con_loss_coe_time = args.con_time
-        # 标记是否使用多卡，全局复用
-        self.use_multi_gpu = args.use_multi_gpu and args.use_gpu
 
     def _build_model(self):
         model_dict = {
@@ -597,9 +598,10 @@ class Exp_Main(Exp_Basic):
         }
         model = model_dict[self.args.model].Model(self.args).float()
 
-        # 多卡逻辑：参数开启 + 显卡可用 才启用 DataParallel
+        # 多卡判断
         if self.use_multi_gpu and torch.cuda.device_count() > 1:
-            device_ids = self.args.device_ids
+            # 解析 device_ids 字符串为列表
+            device_ids = [int(x) for x in self.args.devices.split(',')]
             model = nn.DataParallel(model, device_ids=device_ids)
             print(f"✅ 已启用多卡训练，设备ID: {device_ids}")
         else:
@@ -759,8 +761,7 @@ class Exp_Main(Exp_Basic):
 
         with torch.no_grad():
             for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(vali_bar):
-                # 多卡：不手动移卡，交由DataParallel自动分发
-                # 单卡：保留原有to逻辑
+                # 单卡才手动移设备，多卡交由DataParallel自动分发
                 if not self.use_multi_gpu:
                     batch_x = batch_x.float().to(self.device)
                     batch_x_mark = batch_x_mark.float().to(self.device)
@@ -777,7 +778,6 @@ class Exp_Main(Exp_Basic):
 
                 f_dim = -1 if self.args.features == 'MS' else 0
                 outputs = outputs[:, -self.args.pred_len:, f_dim:]
-                # 标签统一移到设备
                 batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
 
                 preds.append(outputs.detach().cpu().numpy())
@@ -885,7 +885,6 @@ class Exp_Main(Exp_Basic):
                 iter_count += 1
                 model_optim.zero_grad()
 
-                # 多卡/单卡 差异化处理数据移卡
                 if not self.use_multi_gpu:
                     batch_x = batch_x.float().to(self.device)
                     batch_x_mark = batch_x_mark.float().to(self.device)
@@ -1008,7 +1007,6 @@ class Exp_Main(Exp_Basic):
 
         with torch.no_grad():
             for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(test_bar):
-                # 多卡/单卡 差异化处理数据移卡
                 if not self.use_multi_gpu:
                     batch_x = batch_x.float().to(self.device)
                     batch_x_mark = batch_x_mark.float().to(self.device)
@@ -1043,7 +1041,7 @@ class Exp_Main(Exp_Basic):
                     visual(gt, pd, os.path.join(folder_path, str(i) + '.pdf'))
 
         preds = np.array(preds)
-        trues = np.array(trues.shape)
+        trues = np.array(trues)
         tqdm.write('test shape: {} {}'.format(preds.shape, trues.shape))
 
         preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
@@ -1056,13 +1054,11 @@ class Exp_Main(Exp_Basic):
         res_dir = "./results"
         if not os.path.exists(res_dir):
             os.makedirs(res_dir)
-        # 按模型名定义单独日志文件
         model_name = self.args.model
         res_file = os.path.join(res_dir, f"{model_name}.txt")
-        with open(res_dir, 'a', encoding='utf-8') as f:
+        with open(res_file, 'a', encoding='utf-8') as f:
             f.write(setting + '  \n')
             f.write('mse:{}, mae:{}'.format(mse, mae))
-            f.write('\n')
-            f.write('\n')
+            f.write('\n\n')
 
         return mae, mse
