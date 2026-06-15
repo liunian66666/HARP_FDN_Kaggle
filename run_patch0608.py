@@ -4,7 +4,10 @@ import torch
 from exp.exp_main_patch0608 import Exp_Main
 import random
 import numpy as np
+# 全局默认浮点类型
 torch.set_default_dtype(torch.float32)
+# 强制 CUDA 张量默认 float32
+torch.set_default_tensor_type(torch.cuda.FloatTensor)
 
 fix_seed = 2021
 
