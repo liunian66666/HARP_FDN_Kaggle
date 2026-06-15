@@ -1335,11 +1335,12 @@ class Exp_Main(Exp_Basic):
                     true = batch_y
 
                 loss = criterion(pred, true)
-                loss += (
+                aux_loss = (
                     self.con_loss_coe_cls_1 * con_loss_cls_1
                     + self.con_loss_coe_cls_2 * con_loss_cls_2
                     + self.con_loss_coe_time * con_loss_time
                 )
+                loss = loss + aux_loss.sum()
 
                 total_loss.append(loss.item())
                 vali_bar.set_postfix(loss=f'{loss.item():.7f}')
@@ -1453,12 +1454,21 @@ class Exp_Main(Exp_Basic):
                 outputs = outputs * ratio
                 batch_y = batch_y * ratio
 
+                # loss = self._main_forecast_loss(outputs, batch_y, mse_criterion, mae_criterion)
+                # loss += (
+                #     self.con_loss_coe_cls_1 * con_loss_cls_1
+                #     + self.con_loss_coe_cls_2 * con_loss_cls_2
+                #     + self.con_loss_coe_time * con_loss_time
+                # )
                 loss = self._main_forecast_loss(outputs, batch_y, mse_criterion, mae_criterion)
-                loss += (
+                # 多卡 DataParallel 会把每张卡的 loss 拼成一维张量，求和转为全局标量
+                aux_loss = (
                     self.con_loss_coe_cls_1 * con_loss_cls_1
                     + self.con_loss_coe_cls_2 * con_loss_cls_2
                     + self.con_loss_coe_time * con_loss_time
                 )
+                # 统一为标量，兼容单/多卡
+                loss = loss + aux_loss.sum()
 
                 train_loss.append(loss.item())
                 train_bar.set_postfix(loss=f'{loss.item():.7f}')
