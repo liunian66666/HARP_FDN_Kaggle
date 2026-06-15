@@ -2,7 +2,7 @@
 if [ -z "${BASH_VERSION:-}" ]; then exec bash "$0" "$@"; fi
 set -euo pipefail
 
-ROOT="/kaggle/working"
+ROOT="/home/DM24/workspace/Time_Series_Forecasting/HARP_FDN"
 cd "${ROOT}"
 
 : "${DATA_NAME:?DATA_NAME is required}"
@@ -23,7 +23,8 @@ ENC_IN="${ENC_IN:-7}"
 MA_TYPE="${MA_TYPE:-ema}"
 ALPHA="${ALPHA:-0.3}"
 BETA="${BETA:-0.3}"
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}"
+# 默认双卡，也可外部覆盖
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0,1}"
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-max_split_size_mb:256}"
 
 if [ ! -f "${SUMMARY}" ]; then
@@ -53,7 +54,13 @@ run_candidate() {
   echo "================================================================================"
 
   set +e
-  python -u run_patch0608.py     --is_training 1     --root_path ./dataset/ETT-small/     --data_path "${DATA_NAME}.csv"     --model_id "${model_id}"     --model "${MODEL_NAME}"     --data "${DATA_NAME}"     --features M     --seq_len "${SEQ_LEN}"     --pred_len "${PRED_LEN}"     --enc_in "${ENC_IN}"     --des TargetMSE     --itr 1     --train_epochs "${TRAIN_EPOCHS}"     --patience "${PATIENCE}"     --batch_size "${BATCH_SIZE}"     --learning_rate "${LEARNING_RATE}"     --lradj sigmoid     --train_objective "${obj}"     --mse_loss_weight "${msew}"     --vali_objective "${vali}"     --use_vali_ratio 0     --con_cls_1 "${c1}"     --con_cls_2 "${c2}"     --con_time "${ct}"     --ma_type "${MA_TYPE}"     --alpha "${ALPHA}"     --beta "${BETA}"     --patch_len 16     --stride 8     --padding_patch end     --support_temperature "${temp}"     --support_path idx2.xlsx     --num_support 25     --coarse_len "${coarse_len}"     --use_relative_decode 1     --use_distribution_transport 1     --use_uncertainty_fusion 1     --use_posterior_calib "${use_pcal}"     --relative_strength_init "${rel}"     --relative_residual_scale_init 0.5     --transport_var_weight 0.05     --posterior_calib_strength_init "${pcal}"     --use_horizon_segment 1     --use_residual_correction 1     --use_spectral_transport 1     --correction_strength_init "${corr}"     --use_dynamic_support 1     --mixer_d_model "${dmodel}"     --mixer_layers 2     --mixer_dropout "${drop}"     --use_checkpoint 1     --light_head 1     --resume 0     2>&1 | tee "${log_file}"
+  python -u run_patch0608.py     --is_training 1     --root_path ./dataset/ETT-small/     --data_path "${DATA_NAME}.csv"     --model_id "${model_id}"     --model "${MODEL_NAME}"     --data "${DATA_NAME}"     --features M     --seq_len "${SEQ_LEN}"     --pred_len "${PRED_LEN}"     --enc_in "${ENC_IN}"     --des TargetMSE     --itr 1     --train_epochs "${TRAIN_EPOCHS}"     --patience "${PATIENCE}"     --batch_size "${BATCH_SIZE}"     --learning_rate "${LEARNING_RATE}"     --lradj sigmoid     --train_objective "${obj}"     --mse_loss_weight "${msew}"     --vali_objective "${vali}"     --use_vali_ratio 0     --con_cls_1 "${c1}"     --con_cls_2 "${c2}"     --con_time "${ct}"     --ma_type "${MA_TYPE}"     --alpha "${ALPHA}"     --beta "${BETA}"     --patch_len 16     --stride 8     --padding_patch end     --support_temperature "${temp}"     --support_path idx2.xlsx     --num_support 25     --coarse_len "${coarse_len}"     --use_relative_decode 1     --use_distribution_transport 1     --use_uncertainty_fusion 1     --use_posterior_calib "${use_pcal}"     --relative_strength_init "${rel}"     --relative_residual_scale_init 0.5     --transport_var_weight 0.05     --posterior_calib_strength_init "${pcal}"     --use_horizon_segment 1     --use_residual_correction 1     --use_spectral_transport 1     --correction_strength_init "${corr}"     --use_dynamic_support 1     --mixer_d_model "${dmodel}"     --mixer_layers 2     --mixer_dropout "${drop}"     --use_checkpoint 1     --light_head 1     --resume 0 \
+  # ========== 新增多卡参数 ==========
+  --use_gpu 1 \
+  --use_multi_gpu 1 \
+  --device_ids 0,1 \
+  # =================================
+  2>&1 | tee "${log_file}"
   local status=${PIPESTATUS[0]}
   set -e
   if [ "${status}" -ne 0 ]; then
